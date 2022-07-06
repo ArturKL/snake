@@ -17,10 +17,6 @@ class Position:
     def __add__(self, other: Position):
         return Position(self.x + other.x, self.y + other.y)
 
-    # def __iadd__(self, other):
-    #     self.x += other.x
-    #     self.y += other.y
-
     def __sub__(self, other: Position):
         return Position(self.x - other.x, self.y - other.y)
 
@@ -217,30 +213,20 @@ key_to_direction = {
 
 GAME_ON = True
 while True:
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
+            pg.quit()
+            sys.exit()
+        if event.type == pg.KEYUP:
+            if event.key == pg.K_r:
+                board.set_board()
+                GAME_ON = True
+            if new_direction := key_to_direction.get(event.key):
+                board.turn(new_direction)
     if GAME_ON:
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                pg.quit()
-                sys.exit()
-            if event.type == pg.KEYUP:
-                if event.key == pg.K_r:
-                    board.set_board()
-                    GAME_ON = True
-                if new_direction := key_to_direction.get(event.key):
-                    board.turn(new_direction)
         board.update()
         board.draw()
-        pg.display.flip()
-        clock.tick(20)
     else:
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                pg.quit()
-                sys.exit()
-            if event.type == pg.KEYUP:
-                if event.key == pg.K_r:
-                    board.set_board()
-                    GAME_ON = True
         draw_game_over()
-        pg.display.flip()
-
+    pg.display.flip()
+    clock.tick(20)
