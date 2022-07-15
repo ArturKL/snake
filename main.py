@@ -49,9 +49,12 @@ class Segment:
         self.direction = direction
 
     def draw(self):
-        pg.draw.circle(screen, pg.Color('black'),
-                       Cell.get_cell_center(self.position.x, self.position.y), CELL_WIDTH / 2)
-        pg.draw.circle(screen, self.color, Cell.get_cell_center(self.position.x, self.position.y), CELL_WIDTH / 2 - 2)
+        pg.draw.rect(screen, pg.Color('black'), pg.Rect(self.position.x * CELL_WIDTH, self.position.y * CELL_WIDTH,
+                                                        CELL_WIDTH, CELL_WIDTH))
+        pg.draw.rect(screen, pg.Color('white'), pg.Rect(self.position.x * CELL_WIDTH + 2, self.position.y *
+                                                        CELL_WIDTH + 2,
+                                                        CELL_WIDTH - 4, CELL_WIDTH - 4))
+        # pg.draw.circle(screen, self.color, Cell.get_cell_center(self.position.x, self.position.y), CELL_WIDTH / 2 - 2)
 
 
 class Snake:
@@ -102,7 +105,8 @@ class Apple:
         self.position = new_position
 
     def draw(self):
-        pg.draw.circle(screen, pg.Color('red'), Cell.get_cell_center(self.position.x, self.position.y), CELL_WIDTH / 2)
+        pg.draw.rect(screen, pg.Color('red'), pg.Rect(self.position.x * CELL_WIDTH, self.position.y * CELL_WIDTH,
+                                                      CELL_WIDTH, CELL_WIDTH))
 
 
 class Cell(Enum):
@@ -175,7 +179,7 @@ class Board:
 
     def draw_score(self):
         font = pg.font.SysFont('Comic Sans MS', 100)
-        text_surface = font.render(f'Score: {self.score}', True, (0, 0, 0))
+        text_surface = font.render(f'Score: {self.score}', True, FONT_COLOR)
         screen.blit(text_surface, (10, 10))
 
     def draw(self):
@@ -186,7 +190,7 @@ class Board:
 
 
 def draw_game_over():
-    text_surface = FONT.render('Game Over', True, (0, 0, 0))
+    text_surface = FONT.render('Game Over', True, FONT_COLOR)
     screen.blit(text_surface, (board.get_screen_size()[0] / 3, board.get_screen_size()[1] / 3))
 
 
@@ -195,11 +199,12 @@ with open("palette.txt") as f:
 
 pg.font.init()
 FONT = pg.font.SysFont('Comic Sans MS', 200)
+FONT_COLOR = pg.Color('white')
 
 WIDTH = 50
 HEIGHT = 30
 CELL_WIDTH = 50
-board = Board(CELL_WIDTH, WIDTH, HEIGHT, pg.Color('#9CC75D'))
+board = Board(CELL_WIDTH, WIDTH, HEIGHT, pg.Color('black'))
 pg.init()
 clock = pg.time.Clock()
 
@@ -217,12 +222,13 @@ while True:
         if event.type == pg.QUIT:
             pg.quit()
             sys.exit()
-        if event.type == pg.KEYUP:
+        if event.type == pg.KEYDOWN:
             if event.key == pg.K_r:
                 board.set_board()
                 GAME_ON = True
             if new_direction := key_to_direction.get(event.key):
                 board.turn(new_direction)
+            break
     if GAME_ON:
         board.update()
         board.draw()
