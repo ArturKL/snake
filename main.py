@@ -49,11 +49,14 @@ class Segment:
         self.direction = direction
 
     def draw(self):
-        pg.draw.rect(screen, pg.Color('black'), pg.Rect(self.position.x * CELL_WIDTH, self.position.y * CELL_WIDTH,
-                                                        CELL_WIDTH, CELL_WIDTH))
+        # pg.draw.rect(screen, pg.Color('black'), pg.Rect(self.position.x * CELL_WIDTH, self.position.y * CELL_WIDTH,
+        #                                                 CELL_WIDTH, CELL_WIDTH))
         pg.draw.rect(screen, pg.Color('white'), pg.Rect(self.position.x * CELL_WIDTH + 2, self.position.y *
                                                         CELL_WIDTH + 2,
                                                         CELL_WIDTH - 4, CELL_WIDTH - 4))
+        # pg.draw.rect(screen, pg.Color('white'), pg.Rect(self.position.x * CELL_WIDTH, self.position.y *
+        #                                                 CELL_WIDTH,
+        #                                                 CELL_WIDTH, CELL_WIDTH))
         # pg.draw.circle(screen, self.color, Cell.get_cell_center(self.position.x, self.position.y), CELL_WIDTH / 2 - 2)
 
 
@@ -124,27 +127,37 @@ class Board:
     width: int
     cell_width: int
     background_color: pg.Color
+    border: bool
     score: int
     apple: Apple
     snake: Snake
 
-    def __init__(self, cell_width: int, width: int, height: int, background_color):
+    def __init__(self, cell_width: int, width: int, height: int, background_color, border: bool):
         self.height = height
         self.width = width
         self.cell_width = cell_width
         self.background_color = background_color
+        self.border = border
         self.set_board()
 
     def check_snake_collision(self):
         head_pos = self.snake.head.position
-        if head_pos.x < 0 or head_pos.y < 0 or head_pos.x >= self.width or head_pos.y >= self.height:
-            return True
+        if head_pos.x <= 0 or head_pos.y <= 0 or head_pos.x >= self.width or head_pos.y >= self.height:
+            if self.border:
+                return True
+            head_pos.x = head_pos.x % self.width
+            head_pos.y = head_pos.y % self.height
         body = self.snake.body
         for i in range(len(body)):
-            if body[i].position == head_pos:
+            seg_pos = body[i].position
+            if not self.border and \
+                    (seg_pos.x < 0 or seg_pos.y < 0 or seg_pos.x >= self.width or seg_pos.y >= self.height):
+                seg_pos.x = seg_pos.x % self.width
+                seg_pos.y = seg_pos.y % self.height
+            if seg_pos == head_pos:
                 return True
             for j in range(i + 1, len(body)):
-                if body[i].position == body[j].position:
+                if seg_pos == body[j].position:
                     return True
         return False
 
@@ -160,14 +173,24 @@ class Board:
             self.spawn_apple()
 
     def set_board(self):
-        self.score = 0
+        self.score = 1
         self.snake = Snake(self.width // 2 - 1, self.height // 2 - 1)
         self.apple = Apple(Position(self.width // 2 - 1, self.height // 2 - 3))
+
+    def apple_in_snake(self):
+        if self.snake.head.position == self.apple.position:
+            return True
+        for segment in self.snake.body:
+            if self.apple.position == segment.position:
+                return True
+        return False
 
     def spawn_apple(self):
         x = random.randint(0, self.width - 1)
         y = random.randint(0, self.height - 1)
         self.apple.move(Position(x, y))
+        if self.apple_in_snake():
+            return self.spawn_apple()
 
     def get_screen_size(self) -> (int, int):
         return self.width * self.cell_width, self.height * self.cell_width
@@ -178,7 +201,7 @@ class Board:
             board.snake.change_direction(direction)
 
     def draw_score(self):
-        font = pg.font.SysFont('Comic Sans MS', 100)
+        font = pg.font.SysFont('Comic Sans MS', FONT_SIZE // 2)
         text_surface = font.render(f'Score: {self.score}', True, FONT_COLOR)
         screen.blit(text_surface, (10, 10))
 
@@ -198,13 +221,15 @@ with open("palette.txt") as f:
     PALETTE = list(map(lambda x: x.rstrip('\n'), f.readlines()))
 
 pg.font.init()
-FONT = pg.font.SysFont('Comic Sans MS', 200)
+FONT_SIZE = 200
+FONT = pg.font.SysFont('Comic Sans MS', FONT_SIZE)
 FONT_COLOR = pg.Color('white')
 
-WIDTH = 50
-HEIGHT = 30
+WIDTH = 25
+HEIGHT = 15
 CELL_WIDTH = 50
-board = Board(CELL_WIDTH, WIDTH, HEIGHT, pg.Color('black'))
+WALL_BORDER = False
+board = Board(CELL_WIDTH, WIDTH, HEIGHT, pg.Color('black'), WALL_BORDER)
 pg.init()
 clock = pg.time.Clock()
 
